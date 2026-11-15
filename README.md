@@ -2,7 +2,7 @@
 
 円いステージ（半径 1.7 m）に乗った人のアバターに、体操風の動き（32拍・17.6秒の繰り返し）をさせる試作アイテム。ステージから出ると 0.2 秒で元の姿勢へ戻る。掴む・押すなどの操作はない。
 
-- 状態：v1 アップロード済み（2026-11-13、item ID `01cd3b50-6b6d-407f-93f4-b06c62d1e640`、content hash `301f60803096`）。**本番の部屋では未確認。**
+- 状態：v2 アップロード済み（2026-11-15、item ID `01cd3b50-6b6d-407f-93f4-b06c62d1e640`、content hash `ec33ec241ea9`。v1 は 2026-11-13 の `301f60803096`、v2 は名前の変更だけ）。GitHub は toM7x7/taisoustage。**本番の部屋では未確認。**
 - dev：`npm run dev`（5316、`.claude/launch.json` の `motion-stage`）→ `/?lab`
 - 検証：`npm run verify`（テスト5件＋ビルド）、`node scripts/capture.mjs`（keys / enter / unison / routine / vr、画像は `output/capture/`）、`node scripts/thumb.mjs`
 
