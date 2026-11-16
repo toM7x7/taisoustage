@@ -97,11 +97,21 @@ function managerFor(scene: Scene): Mgr {
   managers.set(scene, m); return m
 }
 
-/** now: the item's clock. poseVR: also pose people in VR (their tracked hands are then overridden while they stand in the area). */
-export function createStageBridge(scene: Scene, now: () => number = realNow, options: { poseVR?: boolean } = {}): StageBridge {
+/**
+ * What happens to a person in VR on the stage (their headset and hands are tracked; the host poses their avatar from
+ * PlayerMovement.vrTracking):
+ *   'skip'  left alone
+ *   'body'  pelvis, legs, spine and fingers follow the routine; the arms keep reaching the tracked hands (preserveHands)
+ *   'full'  the whole body follows the routine; the avatar's hands leave the person's real hands
+ * In every mode the head keeps the headset's rotation (an item cannot move the headset's view).
+ */
+export type VrPose = 'skip' | 'body' | 'full'
+/** now: the item's clock. */
+export function createStageBridge(scene: Scene, now: () => number = realNow, options: { vr?: VrPose } = {}): StageBridge {
   const users = new Map<string, Entry>(), mgr = managerFor(scene)
   let held: string | null = null
-  const skip = (e: Entry) => e.actor.isInVR && !options.poseVR
+  const vr = options.vr ?? 'skip'
+  const skip = (e: Entry) => e.actor.isInVR && vr === 'skip'
   /** The way the host has the body facing, read from the hip joints (only valid while we are not posing it). */
   const hostFacing = (e: Entry) => {
     const b = e.found?.rig.bones
@@ -122,7 +132,8 @@ export function createStageBridge(scene: Scene, now: () => number = realNow, opt
         e.snapshot = captureBones(e.found.rig.skeleton)
         try {
           const heading = e.cameFacing + wrap(e.heading - e.cameFacing) * smooth(e.turn)
-          applyAuthoredPose(e.found.rig, frame, { heading, origin: e.actor.feet, groundY: e.actor.feet.y, state: e.state })
+          const inVR = e.actor.isInVR
+          applyAuthoredPose(e.found.rig, frame, { heading, origin: e.actor.feet, groundY: e.actor.feet.y, state: e.state, ...(inVR ? { headMode: 'host' as const, preserveHands: vr === 'body' } : {}) })
           for (const s of e.found.related) s.update()
           e.error = null
         } catch (error) { e.error = String(error); restoreBones(e.snapshot); e.snapshot = null; for (const s of e.found.related) s.update() }

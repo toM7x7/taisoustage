@@ -171,8 +171,10 @@ if (want('vr')) {
   const page = await open()
   await page.evaluate(() => { window.__ms.vr(true); window.__ms.place(0, 0.1) })
   await step(page, 1.0)
-  const e = await me(page)
-  check('vr: a person in VR on the stage is left alone', e?.inside && e.weight === 0, e)
+  await page.evaluate(b => window.__ms.freeze(3 * b), BEAT); await step(page, 1 / 60)
+  const e = await me(page), b = await drawn(page, 'local-dev')
+  // shipped mode 'full': the hands follow the routine too (beat 3 holds the arms overhead)
+  check('vr: a person in VR on the stage is posed, hands included', e?.inside && e.vr && e.weight > 0.99 && !e.error && pick(b, HAND_L)[1] > pick(b, HEAD)[1], { e, hand: pick(b, HAND_L), head: pick(b, HEAD) })
   await page.close()
 }
 

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { usePlacementState, useUsers } from '@xrift/world-components'
 import { AdditiveBlending, Color, ConeGeometry, DoubleSide, Group, MeshBasicMaterial, MeshStandardMaterial, Quaternion, Vector3 } from 'three'
-import { createStageBridge, type StageBridge } from './pose-bridge.ts'
+import { createStageBridge, type StageBridge, type VrPose } from './pose-bridge.ts'
 import { BEAT_S, LOOP_S, segmentAt } from './motion/timeline.ts'
 
 // A round stage. Whoever stands on it is made to do a warm-up routine; stepping off ends it at once.
@@ -16,8 +16,12 @@ export const AREA_R = 1.7
 const AREA_BELOW = 0.5, AREA_ABOVE = 2.6
 /** once inside, a person has to be this much farther out to count as outside (no flicker on the edge) */
 const EDGE_SLACK = 0.06
-/** People in VR are left alone for now: posing them would pull their body away from their tracked hands and headset. */
-const POSE_VR = false
+/**
+ * People in VR: the whole body follows the routine, hands included (the head keeps the headset's rotation; the view
+ * itself cannot be moved). pose-bridge.ts says what each mode does; the dev page can pick one with ?vrpose=skip|body|full.
+ */
+const VR_POSE_SHIPPED: VrPose = 'full'
+const VR_POSE: VrPose = import.meta.env.DEV ? ((new URLSearchParams(location.search).get('vrpose') as VrPose | null) ?? VR_POSE_SHIPPED) : VR_POSE_SHIPPED
 
 function createClock() {
   let frozen: number | null = null
@@ -70,7 +74,7 @@ export function Item({ position = [0, 0, 0], rotation = [0, 0, 0], scale = 1 }: 
 
   useEffect(() => {
     if (preview) return
-    const bridge = createStageBridge(scene, itemClock.now, { poseVR: POSE_VR })
+    const bridge = createStageBridge(scene, itemClock.now, { vr: VR_POSE })
     bridgeRef.current = bridge
     return () => { bridge.dispose(); bridgeRef.current = null }
   }, [scene, preview])
